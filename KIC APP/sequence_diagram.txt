@@ -1,0 +1,82 @@
+title KIC App Progressive Programs Feature
+actor User
+participant ListScreen
+participant ProgramScreen
+participant ScheduleSubScreen
+participant PlannerScreen
+participant ProgramSelectionService
+participant ProgramService
+participant ActivityService
+participant Database
+
+entryspacing 0.8
+== List Available Programs ==
+User->ListScreen: Navigate to Program Listing
+ListScreen->ProgramService: Request Program Listing
+activate ProgramService
+ProgramService-->>Database: Query Available Programs
+Database-->>ProgramService: Return Program Listing
+ProgramService-->ListScreen: Display Program Listing
+ListScreen-->User: Show Program Listing
+
+== Enroll in a Program ==
+User->ProgramScreen: Select Program
+activate ProgramScreen
+User->ProgramScreen: Confirm Enrollment(daysPerWeek)
+ProgramScreen->ProgramSelectionService: Request Enrollment
+activate ProgramSelectionService
+ProgramSelectionService-->>Database: Check Enrollment Availability
+Database-->>ProgramSelectionService: Return Enrollment Availability
+ProgramSelectionService-->ProgramScreen: Confirm Enrollment
+ProgramScreen-->User: Enrollment Confirmation
+
+== View Enrolled Programs and Schedules ==
+User->PlannerScreen: Request Planner View
+activate PlannerScreen
+PlannerScreen->ProgramSelectionService: Query Planner Data
+ProgramSelectionService-->>Database: Query Planner Data
+Database-->>ProgramSelectionService: Return Planner Data
+ProgramSelectionService-->PlannerScreen: Display Planner(with schedules and activity logs)
+PlannerScreen-->User: Show Planner View
+
+== Complete an Activity ==
+User->ScheduleSubScreen: Complete Activity(activityId)
+activate ScheduleSubScreen
+ScheduleSubScreen->ActivityService: Complete Activity(activityId)
+ActivityService-->>Database: Update Activity Status to Completed
+Database-->>ActivityService: Acknowledge Update
+ActivityService-->ScheduleSubScreen: Record Completion
+ScheduleSubScreen-->User: Confirm Activity Completion
+
+== Miss an Activity Day ==
+note over User,ScheduleSubScreen: System reschedules missed activity
+User->ScheduleSubScreen: Check Next Scheduled Activity
+ScheduleSubScreen->ActivityService: Check Next Scheduled Activity
+ActivityService-->>Database: Query Updated Schedule
+Database-->>ActivityService: Return Updated Schedule
+ActivityService-->ScheduleSubScreen: Update Schedule(with rescheduled activity)
+ScheduleSubScreen-->User: Update Schedule
+
+== Skip Previous Unfinished Activities ==
+note over User,ActivityService: On Completing Future Activity
+note over User,ScheduleSubScreen: System marks previous activities as skipped
+User->ScheduleSubScreen: Mark Previous Activities as Skipped(activityIds)
+ScheduleSubScreen->ActivityService: Mark Previous Activities as Skipped(activityIds)
+ActivityService-->>Database: Update Activity Status to Skipped
+Database-->>ActivityService: Acknowledge Update
+ActivityService-->ScheduleSubScreen: Notify System Action
+ScheduleSubScreen-->User: Inform About Skipping Activities
+
+== Pause and Resume Activity ==
+User->ScheduleSubScreen: Request Pause Activity
+ScheduleSubScreen->ActivityService: Request Pause Activity
+ActivityService-->>Database: Update Activity Status to Paused
+Database-->>ActivityService: Acknowledge Update
+ActivityService-->ScheduleSubScreen: Confirm Pause
+ScheduleSubScreen-->User: Confirm Pause
+User->ScheduleSubScreen: Request Resume Activity
+ScheduleSubScreen->ActivityService: Request Resume Activity
+ActivityService-->>Database: Update Activity Status to Resumed
+Database-->>ActivityService: Acknowledge Update
+ActivityService-->ScheduleSubScreen: Confirm Resume
+ScheduleSubScreen-->User: Confirm Resume
